@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommandLine;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -53,10 +54,58 @@ namespace HashParser
                 throw new ParseException("Line " + line, '{', Peek());
 
             Consume("hashname=");
+            workingInfo.hashname = ParseString();
+            Consume(',');
+
+            Consume("category_hashname=");
             workingInfo.category_hashname = ParseString();
             Consume(',');
 
+            Consume("ped_type=");
+            workingInfo.ped_type = ParseString();
+            Consume(',');
 
+            Consume("is_multiplayer=");
+            workingInfo.is_multiplayer = ParseBool();
+            Consume(',');
+
+            Consume("category_hash=");
+        }
+
+        private bool ParseBool()
+        {
+            string token;
+
+            if (Peek() == 't') // true
+            {
+                // parse 'true'
+                for (int i = 4; i > 0; --i)
+                    sb.Append(Advance());
+
+                token = sb.ToStringAndClear();
+                if (token != "true")
+                    throw new ParseException("Parse Bool expected 'true' but got " + token);
+                return true;
+            }
+            else if (Peek() == 'f') // false
+            {
+                // parse 'false'
+                for (int i = 5; i > 0; --i)
+                    sb.Append(Advance());
+
+                token = sb.ToStringAndClear();
+                if (token != "false")
+                    throw new ParseException("Parse Bool expected 'false' but got " + token);
+                return false;
+            }
+            else // error
+            {
+                for (int i = 5; i >= 0; --i)
+                    sb.Append(Advance());
+
+                token = sb.ToStringAndClear();
+                throw new ParseException("Parse Bool expected 'true' or 'false' but got " + token);
+            }
         }
 
         private string ParseString()
