@@ -1,12 +1,11 @@
-﻿using CommandLine;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
 namespace HashParser
 {
-    internal class CsvScanner : IDisposable
+    internal class CsvParser : IDisposable
     {
         private readonly StringBuilder sb = new StringBuilder();
         private readonly char[] buffer = new char[1024];
@@ -17,9 +16,9 @@ namespace HashParser
 
         public bool IsAtEnd { get => reader.EndOfStream; }
 
-        public List<string> Lines { get; private set; }
+        public List<ClothingInfo> Clothing { get; private set; } = new List<ClothingInfo>(8);
 
-        public CsvScanner(Stream stream)
+        public CsvParser(Stream stream)
         {
             reader = new StreamReader(new BufferedStream(stream));
         }
@@ -27,49 +26,89 @@ namespace HashParser
         public void Dispose()
         {
             reader.Dispose();
-
         }
 
-        public List<string> Scan()
+        public List<ClothingInfo> Parse()
         {
-            // TODO - 
-            ConsumeHeaders();
-            
+            // consume headers
+            ConsumeLine("local cloth_hash_names = {");
+
             while (!IsAtEnd && Peek() != '}')
             {
-                ConsumeWhiteSpace();
+                // this is a hella hack to know that we have reached the end of the records
+                try
+                {
+                     Consume('{');
+                }
+                catch
+                {
+                    break;
+                }
                 ScanLine();
+                Clothing.Add(workingInfo.Clone());
+                line++;
             }
 
-            // read each line until the end
-            // get an object definition: { ... }
-
-            return Lines;
+            return Clothing;
         }
 
         private void ScanLine()
         {
-            // scan {
-            if (!Match('{'))
-                throw new ParseException("Line " + line, '{', Peek());
-
             Consume("hashname=");
             workingInfo.hashname = ParseString();
-            Consume(',');
 
             Consume("category_hashname=");
             workingInfo.category_hashname = ParseString();
-            Consume(',');
 
             Consume("ped_type=");
             workingInfo.ped_type = ParseString();
-            Consume(',');
 
             Consume("is_multiplayer=");
             workingInfo.is_multiplayer = ParseBool();
-            Consume(',');
 
             Consume("category_hash=");
+            workingInfo.category_hash = ParseHex();
+
+            Consume("hash=");
+            workingInfo.hash = ParseHex();
+
+            Consume("hash_dec_signed=");
+            workingInfo.hash_dec_signed = ParseNumber(',');
+
+            Consume("category_hash_dec_signed=");
+            workingInfo.category_hash_dec_signed = ParseNumber('}');
+
+            // end object
+            Consume(',');
+        }
+
+        private long ParseNumber(char terminator)
+        {
+            string token = ReadValue(terminator);
+
+            try
+            {
+                return long.Parse(token);
+            }
+            catch (Exception ex)
+            {
+                throw new ParseException($"Line {line}: Could not convert {token} to a number.", ex);
+            }
+        }
+
+        private long ParseHex()
+        {
+            Consume("0x");
+            string token = ReadValue();
+
+            try
+            {
+                return Convert.ToInt64(token, 16);
+            }
+            catch (Exception ex)
+            {
+                throw new ParseException($"Line {line}: Could not convert {token} to hex.", ex);
+            }
         }
 
         private bool ParseBool()
@@ -79,10 +118,7 @@ namespace HashParser
             if (Peek() == 't') // true
             {
                 // parse 'true'
-                for (int i = 4; i > 0; --i)
-                    sb.Append(Advance());
-
-                token = sb.ToStringAndClear();
+                token = ReadValue();
                 if (token != "true")
                     throw new ParseException("Parse Bool expected 'true' but got " + token);
                 return true;
@@ -90,10 +126,7 @@ namespace HashParser
             else if (Peek() == 'f') // false
             {
                 // parse 'false'
-                for (int i = 5; i > 0; --i)
-                    sb.Append(Advance());
-
-                token = sb.ToStringAndClear();
+                token = ReadValue();
                 if (token != "false")
                     throw new ParseException("Parse Bool expected 'false' but got " + token);
                 return false;
@@ -110,10 +143,22 @@ namespace HashParser
 
         private string ParseString()
         {
-            Consume('"');
+            string value = ReadValue();
 
-            while (Peek() != '"')
+            // trim leading and trailing double quotes ""
+            value = value.Substring(1, value.Length - 2);
+            return value;
+        }
+
+        private string ReadValue() => ReadValue(',');
+
+        private string ReadValue(char terminatingChar)
+        {
+            while (!IsAtEnd && Peek() != terminatingChar)
                 sb.Append(Advance());
+
+            if (IsAtEnd)
+                throw new ParseException($"Line {line}: Hit end of file before seeing {terminatingChar}.");
 
             return sb.ToStringAndClear();
         }
@@ -122,7 +167,8 @@ namespace HashParser
         {
             if (IsAtEnd)
                 return '\0';
-            return (char)reader.Peek();
+            char result = (char)reader.Peek();
+            return result;
         }
 
         private char Advance()
@@ -136,27 +182,10 @@ namespace HashParser
             return previousLine = reader.ReadLine();
         }
 
-        /// <summary>
-        /// Consume everything until you hit a valid token.
-        /// </summary>
-        private void ConsumeHeaders()
-        {
-            // the first line of valid data
-            ConsumeLine("local cloth_hash_names = {");
-            ConsumeEmptyLines();
-        }
-
         private void ConsumeEmptyLines()
         {
             while (string.IsNullOrWhiteSpace(previousLine))
                 AdvanceLine();
-        }
-
-        private void ConsumeWhiteSpace()
-        {
-            char next;
-            do next = Peek();
-            while (next == ' ' || next == '\r' || next == '\t');
         }
 
         private void Consume(char target)
@@ -164,7 +193,7 @@ namespace HashParser
             while (!IsAtEnd && Advance() != target);
 
             if (IsAtEnd)
-                throw new ParseException("Hit end of file before finding " + target);
+                throw new ParseException($"Line {line}: Hit end of file before finding " + target);
         }
 
         private void Consume(string target)

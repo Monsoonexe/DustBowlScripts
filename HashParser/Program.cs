@@ -13,7 +13,7 @@ namespace HashParser
     internal class Program
     {
         public static LaunchArguments LaunchArguments { get; private set; }
-        private static bool hadError = true;
+        private static bool hadError = false;
 
         // hex value == 0x123456789 (2 directives and 9 digits)
 
@@ -79,6 +79,9 @@ namespace HashParser
         /// <param name="srcPath"></param>
         private static void RunFile(string srcPath, string destPath)
         {
+            if (string.IsNullOrEmpty(destPath))
+                destPath = Path.GetTempFileName();
+
             try
             {
                 using (var inStream = File.OpenRead(srcPath))
@@ -98,15 +101,8 @@ namespace HashParser
         private static void Run(Stream src, Stream dest)
         {
             // read
-            var scanner = new CsvScanner(src);
-            var lines = scanner.Scan();
-
-            if (hadError)
-                return; // syntax error
-
-            // convert
-            var parser = new ClothingParser(lines);
-            var clothing = parser.Parse();
+            var scanner = new CsvParser(src);
+            var clothing = scanner.Parse();
 
             if (hadError)
                 return; // syntax error

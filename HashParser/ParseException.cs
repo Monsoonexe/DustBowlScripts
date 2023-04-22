@@ -20,5 +20,11 @@ namespace HashParser
         {
             // exists
         }
+
+        public ParseException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+            // exists
+        }
     }
 }
