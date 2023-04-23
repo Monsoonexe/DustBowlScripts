@@ -87,7 +87,7 @@ namespace HashParser
                 var model = category[i];
 
                 // emit lua
-                WriteIndex(i); // [13]
+                WriteIndex(i + 1); // [13]
                 WriteAssignment(); // = 
                 WriteStartObject(); // {
                 WriteVariations(model); // ...
@@ -107,7 +107,7 @@ namespace HashParser
                 var variation = variations[i];
 
                 // emit lua
-                WriteIndex(i); // [1]
+                WriteIndex(i + 1); // [1]
                 WriteAssignment(); // =
                 WriteStartObject(); // {
                 Write(variation); // ...

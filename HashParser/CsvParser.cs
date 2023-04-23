@@ -8,7 +8,6 @@ namespace HashParser
     internal class CsvParser : IDisposable
     {
         private readonly StringBuilder sb = new StringBuilder();
-        private readonly char[] buffer = new char[1024];
         private readonly StreamReader reader;
         private readonly ClothingInfo workingInfo = new ClothingInfo();
         private string previousLine;
