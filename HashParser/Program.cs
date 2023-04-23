@@ -82,6 +82,9 @@ namespace HashParser
             {
                 Run(inStream, outStream);
             }
+
+            // open it for inspection
+            System.Diagnostics.Process.Start(destPath);
         }
 
         private static void Run(Stream src, Stream dest)

@@ -38,14 +38,17 @@ namespace HashParser
             WriteStartObject(); // {
             WriteSexes(clothing); // ...
             WriteEndObject(); // }
+            writer.Flush();
         }
 
         private void WriteSexes(List<List<List<List<ClothingInfo>>>> clothing)
         {
             foreach (var sex in clothing)
             {
+                var name = sex[0][0][0].ped_type;
+
                 // emit lua
-                WriteKey(sex[0][0][0].ped_type); // ['female']
+                WriteKey(name); // ['female']
                 WriteAssignment(); // = 
                 WriteStartObject(); // {
                 WriteCategories(sex); // ...
@@ -61,8 +64,10 @@ namespace HashParser
         {
             foreach (var category in sex)
             {
+                var name = category[0][0].category_hashname;
+
                 // emit lua
-                WriteKey(category[0][0].category_hashname); // ['accessories']
+                WriteKey(name); // ['accessories']
                 WriteAssignment();
                 WriteStartObject();
                 WriteModels(category);
@@ -147,20 +152,21 @@ namespace HashParser
 
         public void Write(ClothingInfo cloth)
         {
+            // emit lua
             WriteProperty(nameof(cloth.category_hash), cloth.category_hash);
-            WriteNextArrayElement();
+            WriteNextArrayElement(); // ,
             WriteProperty(nameof(cloth.category_hash_dec_signed), cloth.category_hash_dec_signed);
-            WriteNextArrayElement();
+            WriteNextArrayElement(); // ,
             WriteProperty(nameof(cloth.category_hashname), cloth.category_hashname);
-            WriteNextArrayElement();
+            WriteNextArrayElement(); // ,
             WriteProperty(nameof(cloth.hash), cloth.hash);
-            WriteNextArrayElement();
+            WriteNextArrayElement(); // ,
             WriteProperty(nameof(cloth.hash_dec_signed), cloth.hash_dec_signed);
-            WriteNextArrayElement();
+            WriteNextArrayElement(); // ,
             WriteProperty(nameof(cloth.hashname), cloth.hashname);
-            WriteNextArrayElement();
+            WriteNextArrayElement(); // ,
             WriteBoolProperty(nameof(cloth.is_multiplayer), cloth.is_multiplayer);
-            WriteNextArrayElement();
+            WriteNextArrayElement(); // ,
             WriteProperty(nameof(cloth.ped_type), cloth.ped_type);
         }
 
