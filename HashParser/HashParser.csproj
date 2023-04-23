@@ -46,7 +46,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Fixer.cs" />
     <Compile Include="ClothingInfo.cs" />
     <Compile Include="HashnameFixer.cs" />
     <Compile Include="LaunchArguments.cs" />
