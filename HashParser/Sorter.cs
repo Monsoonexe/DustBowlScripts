@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Management.Instrumentation;
-using System.Runtime.CompilerServices;
 
 namespace HashParser
 {
@@ -31,17 +29,20 @@ namespace HashParser
             //
 
 
-        public void Sort()
+        public List<List<List<List<ClothingInfo>>>> Sort()
         {
             EnsureHashnameIsFilled(new HashnameFixer());
 
-            var maleClothing = allClothing.Where(x => x.ped_type == "female")
+            var femaleClothing = allClothing.Where(x => x.ped_type == "female")
                 .ToList();
-            var femaleClothing = allClothing.Where(x => x.ped_type == "male")
+            var maleClothing = allClothing.Where(x => x.ped_type == "male")
                 .ToList();
 
-            Categorize(femaleClothing);
-            Categorize(maleClothing);
+            return new List<List<List<List<ClothingInfo>>>>
+            {
+                CategorizeCategory(femaleClothing),
+                CategorizeCategory(maleClothing)
+            };
         }
 
         private void EnsureHashnameIsFilled(HashnameFixer fixer)
@@ -49,27 +50,30 @@ namespace HashParser
             fixer.Fix(allClothing);
         }
         
-        private List<List<List<ClothingInfo>>> Categorize(List<ClothingInfo> clothing)
+        private List<List<List<ClothingInfo>>> CategorizeCategory(List<ClothingInfo> clothing)
         {
             var categories = new List<List<List<ClothingInfo>>>(8);
 
             while (clothing.Count > 0)
-                categories.Add(CategorizeOnce(clothing));
+            {
+                categories.Add(CategorizeModel(clothing));
+            }
 
             return categories;
         }
 
-        private List<List<ClothingInfo>> CategorizeOnce(List<ClothingInfo> clothing)
+        private List<List<ClothingInfo>> CategorizeModel(List<ClothingInfo> clothing)
         {
             string category = clothing[0].category_hashname;
 
             var categoryItems = clothing
-                .Where(item => item.category_hashname == category);
+                .Where(item => item.category_hashname == category)
+                .ToList(); // because of removal
 
             foreach (var item in categoryItems)
             {
                 (string Model, string Variation) = SplitHashTokens(item.hashname);
-                Categorize(Model, item);
+                CategorizeVariation(Model, item);
                 clothing.QuickRemove(item);
             }
 
@@ -79,7 +83,7 @@ namespace HashParser
             return variationCollection;
         }
 
-        private void Categorize(string Model, ClothingInfo clothingInfo)
+        private void CategorizeVariation(string Model, ClothingInfo clothingInfo)
         {
             if (!table.TryGetValue(Model, out List<ClothingInfo> variations))
             {
@@ -92,18 +96,27 @@ namespace HashParser
 
         private static (string Model, string Variation) SplitHashTokens(string hashName)
         {
+            int length = hashName.Length;
             int i = 0;
             int start = 0;
 
             // look for ..._001
-            while (!char.IsDigit(hashName[i++]))
+            while (!char.IsDigit(hashName[i++]) && i < length)
                 ;
+
+            // check for no model number
+            if (i >= length)
+                return (hashName, string.Empty);
 
             // skip over 000_
             i += 3;
+
+            // check for no variations
+            if (i >= length)
+                return (hashName, string.Empty);
             
             string model = hashName.Substring(start, i); // "CLOTHING_ITEM_F_BANDOLIER_000
-            string variation = hashName.Substring(i, hashName.Length - i); // _TINT_001
+            string variation = hashName.Substring(i, length - i); // _TINT_001
 
             return (model, variation);
         }

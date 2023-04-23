@@ -20,7 +20,7 @@ namespace HashParser
 
         public CsvParser(Stream stream)
         {
-            reader = new StreamReader(new BufferedStream(stream));
+            reader = new StreamReader(stream);
         }
 
         public void Dispose()

@@ -22,11 +22,11 @@ namespace HashParser
                 SetQuantity(category, quantity);
 
                 // generate new hash name
-                string newHashname = $"{category}_FIXED_000_VAR_{quantity}";
+                string newHashname = $"{category}_FIXED_000_VAR_{quantity:D3}";
 
 
                 // finalize
-                clothing.category_hashname = newHashname;
+                clothing.hashname = newHashname;
             }
 
             Reset();

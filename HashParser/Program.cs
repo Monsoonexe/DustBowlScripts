@@ -1,19 +1,12 @@
 ﻿using CommandLine;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace HashParser
 {
     internal class Program
     {
         public static LaunchArguments LaunchArguments { get; private set; }
-        private static bool hadError = false;
 
         // hex value == 0x123456789 (2 directives and 9 digits)
 
@@ -82,40 +75,25 @@ namespace HashParser
             if (string.IsNullOrEmpty(destPath))
                 destPath = Path.GetTempFileName();
 
-            try
+            using (var inFile = File.OpenRead(srcPath))
+            using (var inStream = new BufferedStream(inFile))
+            using (var outFile = File.OpenWrite(destPath))
+            using (var outStream = new BufferedStream(outFile))
             {
-                using (var inStream = File.OpenRead(srcPath))
-                using (var outStream = File.OpenWrite(destPath))
-                {
-                    Run(inStream, outStream);
-                }
-
-                // print success
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                hadError = true;
+                Run(inStream, outStream);
             }
         }
 
         private static void Run(Stream src, Stream dest)
         {
-            // read
             var scanner = new CsvParser(src);
             var clothing = scanner.Parse();
 
-            if (hadError)
-                return; // syntax error
-
             var sorter = new Sorter(clothing);
-            sorter.Sort();
+            var sortedClothing = sorter.Sort();
 
-            if (hadError)
-                return; // syntax error
-
-            var output = new LuaWriter(clothing, dest);
-            output.WriteAll();
+            var output = new LuaWriter(dest);
+            output.WriteVariable("clothes_list", sortedClothing);
         }
     }
 }
