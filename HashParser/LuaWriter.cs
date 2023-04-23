@@ -5,12 +5,12 @@ using System.Reflection;
 
 namespace HashParser
 {
-    internal class OutputWriter : IDisposable
+    internal class LuaWriter : IDisposable
     {
         private readonly TextWriter writer;
         private List<ClothingInfo> clothing;
 
-        public OutputWriter(List<ClothingInfo> clothing, Stream dest)
+        public LuaWriter(List<ClothingInfo> clothing, Stream dest)
         {
             this.clothing = clothing;
             writer = new StreamWriter(dest);

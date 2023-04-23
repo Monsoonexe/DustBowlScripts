@@ -95,6 +95,7 @@ namespace HashParser
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                hadError = true;
             }
         }
 
@@ -113,7 +114,7 @@ namespace HashParser
             if (hadError)
                 return; // syntax error
 
-            var output = new OutputWriter(clothing, dest);
+            var output = new LuaWriter(clothing, dest);
             output.WriteAll();
         }
     }

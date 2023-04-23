@@ -49,8 +49,10 @@
     <Compile Include="ClothingDeserializer.cs" />
     <Compile Include="Fixer.cs" />
     <Compile Include="ClothingInfo.cs" />
+    <Compile Include="HashnameFixer.cs" />
     <Compile Include="LaunchArguments.cs" />
-    <Compile Include="OutputWriter.cs" />
+    <Compile Include="LuaWriter.cs" />
+    <Compile Include="ClothingManifest.cs" />
     <Compile Include="ParseException.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
