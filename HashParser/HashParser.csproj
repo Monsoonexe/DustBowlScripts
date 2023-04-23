@@ -51,6 +51,7 @@
     <Compile Include="ClothingInfo.cs" />
     <Compile Include="HashnameFixer.cs" />
     <Compile Include="LaunchArguments.cs" />
+    <Compile Include="ListExtensions.cs" />
     <Compile Include="LuaWriter.cs" />
     <Compile Include="ClothingManifest.cs" />
     <Compile Include="ParseException.cs" />
